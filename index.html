@@ -111,7 +111,7 @@ fetch("config.json?t=" + Date.now())
       fetch(url, { mode: "no-cors" })
         .then(() => {
             document.getElementById("frame").src =
-              url + "/d/sjdjcw9e0/monitoring-home-network?orgId=1&from=now-15m&to=now&timezone=browser&refresh=5s&kiosk=true";
+              url + "/d/sjdjcw9e0/monitoring-home-network?orgId=1&from=now-30m&to=now&timezone=browser&refresh=5s&kiosk=true";
 
             document.getElementById("fallback").style.display = "none";
             document.getElementById("frame").style.display = "block";
