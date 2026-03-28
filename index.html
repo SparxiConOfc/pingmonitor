@@ -96,41 +96,74 @@
 <iframe id="frame"></iframe>
 
 <script>
-fetch("config.json?t=" + Date.now())
-  .then(res => res.json())
-  .then(data => {
-      const url = data.url;
-      const frame = document.getElementById("frame");
+const frame = document.getElementById("frame");
+const fallback = document.getElementById("fallback");
+const title = document.getElementById("status-title");
+const desc = document.getElementById("status-desc");
 
-      const fallback = document.getElementById("fallback");
-      const title = document.getElementById("status-title");
-      const desc = document.getElementById("status-desc");
+let currentURL = null;
+let loaded = false;
 
-      let loaded = false;
+function setConnecting() {
+    fallback.classList.remove("closed");
+    fallback.classList.add("connecting");
+    title.innerText = "SERVER CONNECTING...";
+    desc.innerText = "Attempting to reach monitoring server...";
+}
 
-      frame.onload = () => {
-          loaded = true;
-          fallback.style.display = "none";
-          frame.style.display = "block";
-      };
+function setClosed() {
+    fallback.classList.remove("connecting");
+    fallback.classList.add("closed");
+    title.innerText = "SERVER CLOSED";
+    desc.innerText = "Retrying connection...";
+}
 
-      frame.src =
-        url + "/d/sjdjcw9e0/monitoring-home-network?orgId=1&from=now-30m&to=now&timezone=browser&refresh=5s&kiosk=true";
+function loadFrame(url) {
+    loaded = false;
 
-      setTimeout(() => {
-          if (!loaded) {
-              fallback.classList.remove("connecting");
-              fallback.classList.add("closed");
+    frame.onload = () => {
+        loaded = true;
+        fallback.style.display = "none";
+        frame.style.display = "block";
+    };
 
-              title.innerText = "SERVER CLOSED";
-              desc.innerText = "The monitoring server is currently offline.";
+    frame.src =
+      url + "/d/sjdjcw9e0/monitoring-home-network?orgId=1&from=now-30m&to=now&timezone=browser&refresh=5s&kiosk=true";
+
+    setTimeout(() => {
+        if (!loaded) {
+            setClosed();
+        }
+    }, 5000);
+}
+
+function checkServer() {
+    fetch("config.json?t=" + Date.now())
+      .then(res => res.json())
+      .then(data => {
+          const newURL = data.url;
+         
+          if (newURL !== currentURL) {
+              currentURL = newURL;
+              fallback.style.display = "flex";
+              frame.style.display = "none";
+              setConnecting();
+              loadFrame(newURL);
+          } else if (!loaded) {
+              setConnecting();
+              loadFrame(newURL);
           }
-      }, 5000);
-  })
-  .catch(() => {
-      document.getElementById("status-title").innerText = "CONFIG ERROR";
-      document.getElementById("status-desc").innerText = "Failed to load configuration.";
-  });
+      })
+      .catch(() => {
+          setClosed();
+      });
+}
+
+
+setConnecting();
+checkServer();
+
+setInterval(checkServer, 5000);
 </script>
 
 </body>
