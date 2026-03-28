@@ -103,6 +103,7 @@ const desc = document.getElementById("status-desc");
 
 let currentURL = null;
 let loaded = false;
+let checking = false;
 
 function setConnecting() {
     fallback.classList.remove("closed");
@@ -118,47 +119,68 @@ function setClosed() {
     desc.innerText = "Retrying connection...";
 }
 
-function loadFrame(url) {
-    loaded = false;
-
-    frame.onload = () => {
-        loaded = true;
-        fallback.style.display = "none";
-        frame.style.display = "block";
-    };
-
+function setOnline(url) {
     frame.src =
       url + "/d/sjdjcw9e0/monitoring-home-network?orgId=1&from=now-30m&to=now&timezone=browser&refresh=5s&kiosk=true";
 
-    setTimeout(() => {
-        if (!loaded) {
-            setClosed();
+    fallback.style.display = "none";
+    frame.style.display = "block";
+}
+
+function pingServer(url) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+
+        let done = false;
+
+        img.onload = () => {
+            done = true;
+            resolve(true);
+        };
+
+        img.onerror = () => {
+            done = true;
+            reject(false);
+        };
+
+        img.src = url + "/favicon.ico?t=" + Date.now();
+
+        setTimeout(() => {
+            if (!done) reject(false);
+        }, 4000);
+    });
+}
+
+async function checkServer() {
+    if (checking) return;
+    checking = true;
+
+    try {
+        const res = await fetch("config.json?t=" + Date.now());
+        const data = await res.json();
+        const url = data.url;
+
+        if (!url) throw "No URL";
+
+        if (url !== currentURL) {
+            currentURL = url;
+            fallback.style.display = "flex";
+            frame.style.display = "none";
+            setConnecting();
         }
-    }, 5000);
-}
 
-function checkServer() {
-    fetch("config.json?t=" + Date.now())
-      .then(res => res.json())
-      .then(data => {
-          const newURL = data.url;
-         
-          if (newURL !== currentURL) {
-              currentURL = newURL;
-              fallback.style.display = "flex";
-              frame.style.display = "none";
-              setConnecting();
-              loadFrame(newURL);
-          } else if (!loaded) {
-              setConnecting();
-              loadFrame(newURL);
-          }
-      })
-      .catch(() => {
-          setClosed();
-      });
-}
+        await pingServer(url);
 
+        setOnline(url);
+
+    } catch (err) {
+        frame.style.display = "none";
+        fallback.style.display = "flex";
+        setClosed();
+    }
+
+    checking = false;
+}
 
 setConnecting();
 checkServer();
