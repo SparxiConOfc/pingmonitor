@@ -107,18 +107,24 @@ fetch("config.json?t=" + Date.now())
   .then(res => res.json())
   .then(data => {
       const url = data.url;
+      const frame = document.getElementById("frame");
 
-      fetch(url, { mode: "no-cors" })
-        .then(() => {
-            document.getElementById("frame").src =
-              url + "/d/sjdjcw9e0/monitoring-home-network?orgId=1&from=now-30m&to=now&timezone=browser&refresh=5s&kiosk=true";
+      let loaded = false;
 
-            document.getElementById("fallback").style.display = "none";
-            document.getElementById("frame").style.display = "block";
-        })
-        .catch(() => {
-            console.log("Server offline");
-        });
+      frame.onload = () => {
+          loaded = true;
+          document.getElementById("fallback").style.display = "none";
+          frame.style.display = "block";
+      };
+
+      frame.src =
+        url + "/d/sjdjcw9e0/monitoring-home-network?orgId=1&from=now-30m&to=now&timezone=browser&refresh=5s&kiosk=true";
+
+      setTimeout(() => {
+          if (!loaded) {
+              console.log("Server offline (timeout)");
+          }
+      }, 5000); // 5 detik
   })
   .catch(() => {
       console.log("Config load failed");
