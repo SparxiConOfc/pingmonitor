@@ -18,7 +18,6 @@
         background: #050505;
     }
 
-    /* IFRAME */
     iframe {
         width: 100%;
         height: 100%;
@@ -26,7 +25,6 @@
         display: none;
     }
 
-    /* FALLBACK */
     #fallback {
         display: flex;
         align-items: center;
@@ -49,11 +47,19 @@
     .status-dot {
         height: 12px;
         width: 12px;
-        background-color: #ff4b4b;
         border-radius: 50%;
         margin: 0 auto 20px;
-        box-shadow: 0 0 12px #ff4b4b;
         animation: blink 1.5s infinite;
+    }
+
+    .connecting .status-dot {
+        background-color: #f7c948;
+        box-shadow: 0 0 12px #f7c948;
+    }
+
+    .closed .status-dot {
+        background-color: #ff4b4b;
+        box-shadow: 0 0 12px #ff4b4b;
     }
 
     @keyframes blink {
@@ -63,39 +69,26 @@
     }
 
     .card h1 {
-    font-size: 2rem;
-    margin-bottom: 10px;
-    letter-spacing: -0.5px;
-    color: #ffffff;
-    text-shadow: 0 0 8px rgba(255, 75, 75, 0.3);
+        font-size: 2rem;
+        margin-bottom: 10px;
+        color: #fff;
     }
 
     .card p {
         color: #888;
         font-size: 1rem;
     }
-
-    @media (max-width: 600px) {
-        .card {
-            padding: 30px 20px;
-        }
-
-        .card h1 {
-            font-size: 1.5rem;
-        }
-    }
 </style>
-
 </head>
 
 <body>
 
 <!-- FALLBACK -->
-<div id="fallback">
+<div id="fallback" class="connecting">
     <div class="card">
         <div class="status-dot"></div>
-        <h1>SERVER CLOSED</h1>
-        <p>The monitoring server is currently offline.</p>
+        <h1 id="status-title">SERVER CONNECTING...</h1>
+        <p id="status-desc">Attempting to reach monitoring server...</p>
     </div>
 </div>
 
@@ -109,11 +102,15 @@ fetch("config.json?t=" + Date.now())
       const url = data.url;
       const frame = document.getElementById("frame");
 
+      const fallback = document.getElementById("fallback");
+      const title = document.getElementById("status-title");
+      const desc = document.getElementById("status-desc");
+
       let loaded = false;
 
       frame.onload = () => {
           loaded = true;
-          document.getElementById("fallback").style.display = "none";
+          fallback.style.display = "none";
           frame.style.display = "block";
       };
 
@@ -122,12 +119,17 @@ fetch("config.json?t=" + Date.now())
 
       setTimeout(() => {
           if (!loaded) {
-              console.log("Server offline (timeout)");
+              fallback.classList.remove("connecting");
+              fallback.classList.add("closed");
+
+              title.innerText = "SERVER CLOSED";
+              desc.innerText = "The monitoring server is currently offline.";
           }
-      }, 5000); // 5 detik
+      }, 5000);
   })
   .catch(() => {
-      console.log("Config load failed");
+      document.getElementById("status-title").innerText = "CONFIG ERROR";
+      document.getElementById("status-desc").innerText = "Failed to load configuration.";
   });
 </script>
 
