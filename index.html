@@ -166,10 +166,15 @@ async function checkServer() {
         setOnline(url);
 
     } catch (err) {
-        frame.style.display = "none";
-        fallback.style.display = "flex";
-        setClosed();
-    }
+    isOnline = false;
+
+    // 🔥 HAPUS iframe sepenuhnya
+    frame.src = "";
+    frame.style.display = "none";
+
+    fallback.style.display = "flex";
+    setClosed();
+}
 
     checking = false;
 }
