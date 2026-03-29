@@ -18,6 +18,13 @@
         background: #050505;
     }
 
+    iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: none;
+    }
+
     #fallback {
         display: flex;
         align-items: center;
@@ -85,15 +92,19 @@
     </div>
 </div>
 
+<iframe id="frame"></iframe>
+
 <script>
+const frame = document.getElementById("frame");
 const fallback = document.getElementById("fallback");
 const title = document.getElementById("status-title");
 const desc = document.getElementById("status-desc");
 
 let currentURL = null;
+let isOnline = false;
 let checking = false;
 
-
+// UI
 function setConnecting() {
     fallback.classList.remove("closed");
     fallback.classList.add("connecting");
@@ -102,16 +113,34 @@ function setConnecting() {
 }
 
 function setClosed() {
+    isOnline = false;
+
+    frame.removeAttribute("src");
+    frame.style.display = "none";
+
+    fallback.style.display = "flex";
     fallback.classList.remove("connecting");
     fallback.classList.add("closed");
+
     title.innerText = "SERVER CLOSED";
     desc.innerText = "Retrying automatically. If the page does not load, the monitoring server is currently offline.";
+}
+
+function setOnline(url) {
+    if (isOnline) return;
+
+    isOnline = true;
+
+    frame.src =
+      url + "/d/sjdjcw9e0/monitoring-home-network?orgId=1&from=now-30m&to=now&timezone=browser&refresh=5s&kiosk=true";
+
+    fallback.style.display = "none";
+    frame.style.display = "block";
 }
 
 function pingServer(url) {
     return new Promise((resolve, reject) => {
         const img = new Image();
-
         let done = false;
 
         img.onload = () => {
@@ -132,7 +161,7 @@ function pingServer(url) {
     });
 }
 
-
+// MAIN
 async function checkServer() {
     if (checking) return;
     checking = true;
@@ -144,19 +173,16 @@ async function checkServer() {
 
         if (!url) throw "No URL";
 
-
         if (url !== currentURL) {
             currentURL = url;
+            isOnline = false;
             setConnecting();
         }
 
         await pingServer(url);
 
+        setOnline(url);
 
-      setTimeout(() => {
-         window.location.href =
-  url + "/d/sjdjcw9e0/monitoring-home-network?orgId=1&from=now-30m&to=now&timezone=browser&refresh=5s&kiosk=true";
-      }, 500);
     } catch (err) {
         setClosed();
     }
@@ -164,7 +190,7 @@ async function checkServer() {
     checking = false;
 }
 
-
+frame.removeAttribute("src"); // 🔥 penting
 setConnecting();
 checkServer();
 
