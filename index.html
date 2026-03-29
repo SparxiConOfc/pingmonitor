@@ -109,9 +109,21 @@ function setClosed() {
 }
 
 function pingServer(url) {
-    return fetch(url + "/login?t=" + Date.now(), {
-        method: "GET",
-        mode: "no-cors"
+    return new Promise((resolve, reject) => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 4000);
+
+        fetch(url + "/login?t=" + Date.now(), {
+            method: "GET",
+            signal: controller.signal
+        })
+        .then(() => {
+            clearTimeout(timeout);
+            resolve(true);
+        })
+        .catch(() => {
+            reject(false);
+        });
     });
 }
 
@@ -136,9 +148,9 @@ async function checkServer() {
         await pingServer(url);
 
 
-        window.location.href =
-          url + "/d/sjdjcw9e0/monitoring-home-network?orgId=1&from=now-30m&to=now&timezone=browser&refresh=5s&kiosk=true";
-
+      setTimeout(() => {
+          window.location.href = url + "/d/...";
+      }, 500);
     } catch (err) {
         setClosed();
     }
