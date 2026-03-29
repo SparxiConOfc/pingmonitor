@@ -18,13 +18,6 @@
         background: #050505;
     }
 
-    iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
-        display: none;
-    }
-
     #fallback {
         display: flex;
         align-items: center;
@@ -84,7 +77,6 @@
 
 <body>
 
-<!-- FALLBACK -->
 <div id="fallback" class="connecting">
     <div class="card">
         <div class="status-dot"></div>
@@ -93,18 +85,14 @@
     </div>
 </div>
 
-<!-- GRAFANA -->
-<iframe id="frame"></iframe>
-
 <script>
-const frame = document.getElementById("frame");
 const fallback = document.getElementById("fallback");
 const title = document.getElementById("status-title");
 const desc = document.getElementById("status-desc");
 
 let currentURL = null;
 let checking = false;
-let isOnline = false; // 🔥 FLAG PENTING
+
 
 function setConnecting() {
     fallback.classList.remove("closed");
@@ -114,32 +102,19 @@ function setConnecting() {
 }
 
 function setClosed() {
-    isOnline = false;
     fallback.classList.remove("connecting");
     fallback.classList.add("closed");
     title.innerText = "SERVER CLOSED";
     desc.innerText = "Retrying automatically. If the page does not load, the monitoring server is currently offline.";
 }
 
-function setOnline(url) {
-    if (isOnline) return; // 🔥 JANGAN reload kalau sudah online
-
-    isOnline = true;
-
-    frame.src =
-      url + "/d/sjdjcw9e0/monitoring-home-network?orgId=1&from=now-30m&to=now&timezone=browser&refresh=5s&kiosk=true";
-
-    fallback.style.display = "none";
-    frame.style.display = "block";
-}
-
-// ping tetap
 function pingServer(url) {
     return fetch(url + "/login?t=" + Date.now(), {
         method: "GET",
         mode: "no-cors"
     });
 }
+
 
 async function checkServer() {
     if (checking) return;
@@ -152,38 +127,29 @@ async function checkServer() {
 
         if (!url) throw "No URL";
 
-        // kalau URL berubah → reset
+
         if (url !== currentURL) {
             currentURL = url;
-            isOnline = false;
-            fallback.style.display = "flex";
-            frame.style.display = "none";
             setConnecting();
         }
 
         await pingServer(url);
 
-        setOnline(url);
+
+        window.location.href =
+          url + "/d/sjdjcw9e0/monitoring-home-network?orgId=1&from=now-30m&to=now&timezone=browser&refresh=5s&kiosk=true";
 
     } catch (err) {
-    isOnline = false;
-
-    // 🔥 HAPUS iframe sepenuhnya
-    frame.src = "";
-    frame.style.display = "none";
-
-    fallback.style.display = "flex";
-    setClosed();
-}
+        setClosed();
+    }
 
     checking = false;
 }
 
-// init
+
 setConnecting();
 checkServer();
 
-// tetap retry tiap 5 detik
 setInterval(checkServer, 5000);
 </script>
 
