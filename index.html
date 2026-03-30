@@ -155,19 +155,18 @@ function pingServer(url) {
         img.onerror = () => {
             if (!done) {
                 done = true;
-                reject(new Error("Favicon load failed (Server likely down)")); 
+                reject(new Error("Ping gagal (Terhalang splash screen atau path salah)"));
             }
         };
 
-
-        img.src = url + "/favicon.ico?t=" + Date.now();
+        img.src = url + "/public/img/fav32.png?t=" + Date.now();
 
         setTimeout(() => {
             if (!done) {
                 done = true;
-                reject(new Error("Ping timeout"));
+                reject(new Error("Timeout ping"));
             }
-        }, 5000);
+        }, 10000);
     });
 }
 
